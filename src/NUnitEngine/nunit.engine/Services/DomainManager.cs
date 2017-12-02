@@ -135,7 +135,7 @@ namespace NUnit.Engine.Services
             return setup;
         }
 
-        public void Unload(AppDomain domain)
+        public virtual void Unload(AppDomain domain)
         {
             new DomainUnloader(domain).Unload();
         }
@@ -185,7 +185,7 @@ namespace NUnit.Engine.Services
                     domainName = _domain.FriendlyName;
 
                     // Uncomment to simulate an error in unloading
-                    //throw new Exception("Testing: simulated unload error");
+                    //throw new CannotUnloadAppDomainException("Testing: simulated unload error");
 
                     // Uncomment to simulate a timeout while unloading
                     //while (true) ;

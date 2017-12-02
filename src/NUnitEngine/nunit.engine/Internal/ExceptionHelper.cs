@@ -79,6 +79,16 @@ namespace NUnit.Common
         }
 
         /// <summary>
+        /// Gets the innermost exception in the hierachy, from InnerExceptions
+        /// and LoaderExceptions.
+        /// </summary>
+        public static Exception GetInnerMostException(Exception exception)
+        {
+            var exceptionList = FlattenExceptionHierarchy(exception);
+            return exceptionList[exceptionList.Count - 1];
+        }
+
+        /// <summary>
         /// Gets the stack trace of the exception. If no stack trace
         /// is provided, returns "No stack trace available".
         /// </summary>

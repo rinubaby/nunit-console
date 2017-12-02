@@ -126,6 +126,14 @@ namespace NUnit.Engine.Services
             }
         }
 
+        public void SubstituteService<T>(T newService) where T : IService
+        {
+            var currService = GetService(typeof(T));
+            _services.Remove(currService);
+            _serviceIndex.Remove(typeof(T));
+            AddService(newService);
+        }
+
         public void ClearServices()
         {
             log.Info("Clearing Service list");

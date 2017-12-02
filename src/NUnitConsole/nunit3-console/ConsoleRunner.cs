@@ -47,6 +47,7 @@ namespace NUnit.ConsoleRunner
         public static readonly int INVALID_ASSEMBLY = -2;
         //public static readonly int FIXTURE_NOT_FOUND = -3;    //No longer in use
         public static readonly int INVALID_TEST_FIXTURE = -4;
+        public static readonly int APPDOMAIN_UNLOAD_EXCEPTION = -5;
         public static readonly int UNEXPECTED_ERROR = -100;
 
         #endregion
@@ -227,11 +228,9 @@ namespace NUnit.ConsoleRunner
                 RestoreErrorOutput();
             }
 
-            var writer = new ColorConsoleWriter(!_options.NoColor);
-
             if (result != null)
             {
-                var reporter = new ResultReporter(result, writer, _options);
+                var reporter = new ResultReporter(result, _outWriter, _options);
                 reporter.ReportResults();
 
                 foreach (var spec in _options.ResultOutputSpecifications)
@@ -243,7 +242,13 @@ namespace NUnit.ConsoleRunner
 
                 // Since we got a result, we display any engine exception as a warning
                 if (engineException != null)
-                    writer.WriteLine(ColorStyle.Warning, Environment.NewLine + ExceptionHelper.BuildMessage(engineException));
+                {
+                    _outWriter.WriteLine(ColorStyle.Warning, Environment.NewLine + ExceptionHelper.BuildMessage(engineException));
+                    var exceptionType = ExceptionHelper.GetInnerMostException(engineException).GetType();
+                    return exceptionType == typeof(CannotUnloadAppDomainException)
+                        ? ConsoleRunner.APPDOMAIN_UNLOAD_EXCEPTION
+                        : ConsoleRunner.UNEXPECTED_ERROR;
+                }
 
                 if (reporter.Summary.UnexpectedError)
                     return ConsoleRunner.UNEXPECTED_ERROR;
@@ -259,9 +264,9 @@ namespace NUnit.ConsoleRunner
             // If we got here, it's because we had an exception, but check anyway
             if (engineException != null)
             {
-                writer.WriteLine(ColorStyle.Error, ExceptionHelper.BuildMessage(engineException));
-                writer.WriteLine();
-                writer.WriteLine(ColorStyle.Error, ExceptionHelper.BuildStackTrace(engineException));
+                _outWriter.WriteLine(ColorStyle.Error, ExceptionHelper.BuildMessage(engineException));
+                _outWriter.WriteLine();
+                _outWriter.WriteLine(ColorStyle.Error, ExceptionHelper.BuildStackTrace(engineException));
             }
 
             return ConsoleRunner.UNEXPECTED_ERROR;
