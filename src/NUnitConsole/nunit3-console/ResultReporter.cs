@@ -88,15 +88,24 @@ namespace NUnit.ConsoleRunner
                     Writer.WriteLine(ColorStyle.SectionHeader, "Run Settings");
 
                     foreach (XmlNode node in settings)
-                    {
-                        string name = node.GetAttribute("name");
-                        string val = node.GetAttribute("value");
-                        string label = string.Format("    {0}: ", name);
-                        Writer.WriteLabelLine(label, val);
-                    }
+                        WriteSettingsNode(node);
 
                     Writer.WriteLine();
                 }
+            }
+        }
+
+        private void WriteSettingsNode(XmlNode node)
+        {
+            string name = node.GetAttribute("name");
+            string val = node.GetAttribute("value");
+            Writer.WriteLabelLine($"    {name}: ", val ?? string.Empty);
+
+            foreach (XmlNode item in node.SelectNodes("item"))
+            {
+                string key = item.GetAttribute("key");
+                string value = item.GetAttribute("value");
+                Writer.WriteLine(ColorStyle.Value, $"        {key}: {value}");
             }
         }
 
