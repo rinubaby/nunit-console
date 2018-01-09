@@ -97,11 +97,13 @@ namespace NUnit.ConsoleRunner
 
         private void WriteSettingsNode(XmlNode node)
         {
+            var items = node.SelectNodes("item");
             string name = node.GetAttribute("name");
-            string val = node.GetAttribute("value");
-            Writer.WriteLabelLine($"    {name}: ", val ?? string.Empty);
+            string val = node.GetAttribute("value") ?? string.Empty;
 
-            foreach (XmlNode item in node.SelectNodes("item"))
+            Writer.WriteLabelLine($"    {name}: ", items.Count > 0 ? string.Empty : val);
+
+            foreach (XmlNode item in items)
             {
                 string key = item.GetAttribute("key");
                 string value = item.GetAttribute("value");

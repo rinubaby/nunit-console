@@ -46,8 +46,16 @@ namespace NUnit.ConsoleRunner.Tests
         [OneTimeSetUp]
         public void CreateResult()
         {
-            var mockAssembly = typeof (MockAssembly).Assembly;
-            var emptySettings = new Dictionary<string, object>();
+            var mockAssembly = typeof(MockAssembly).Assembly;
+            var emptySettings = new Dictionary<string, object>
+            {
+                { "TestParameters", "1=d;2=c" },
+                { "TestParametersDictionary", new Dictionary<string, string>
+                {
+                    { "1", "d" },
+                    { "2", "c" }
+                }}
+            };
 
             var runner = new NUnitTestAssemblyRunner(new DefaultTestAssemblyBuilder());
             runner.Load(mockAssembly, emptySettings);
@@ -92,7 +100,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void SummaryReportTest()
         {
-            var expected = new [] {
+            var expected = new[] {
                 "Test Run Summary",
                 "  Overall result: Failed",
                $"  Test Count: {MockAssembly.Tests}, Passed: {MockAssembly.Passed}, Failed: 5, Warnings: 1, Inconclusive: 1, Skipped: 7",
@@ -128,7 +136,7 @@ namespace NUnit.ConsoleRunner.Tests
                 "6) Invalid : NUnit.Tests.BadFixture" + nl +
                 "No suitable constructor was found"
             };
-            
+
             var actualErrorFailuresReport = GetReport(_reporter.WriteErrorsFailuresAndWarningsReport);
 
             foreach (var ex in expected)
@@ -140,7 +148,7 @@ namespace NUnit.ConsoleRunner.Tests
         [Test]
         public void TestsNotRunTest()
         {
-            var expected = new [] {
+            var expected = new[] {
                 "Tests Not Run",
                 "",
                 "1) Explicit : NUnit.Tests.Assemblies.MockTestFixture.ExplicitTest",
@@ -169,11 +177,53 @@ namespace NUnit.ConsoleRunner.Tests
             Assert.That(report, Is.EqualTo(expected));
         }
 
-        #region Helper Methods
-
-        private TestEngineResult AddMetadata(TestEngineResult input)
+        [Test]
+        public void TestParameterSettingsWrittenCorrectly()
         {
-            input.Add("<settings><setting name=\"Setting1Name\" value=\"Setting1Value\"></setting><setting name=\"Setting2Name\" value=\"Setting2Value\"></setting></settings>");
+            //TEST is WIP - having issues capturing the correct output?
+
+            var expected = new[] {
+                "Tests Not Run",
+                "",
+                "1) Explicit : NUnit.Tests.Assemblies.MockTestFixture.ExplicitTest",
+                "",
+                "2) Ignored : NUnit.Tests.Assemblies.MockTestFixture.IgnoreTest",
+                "Ignore Message",
+                "",
+                "3) Explicit : NUnit.Tests.ExplicitFixture.Test1",
+                "OneTimeSetUp: ",
+                "",
+                "4) Explicit : NUnit.Tests.ExplicitFixture.Test2",
+                "OneTimeSetUp: ",
+                "",
+                "5) Ignored : NUnit.Tests.IgnoredFixture.Test1",
+                "OneTimeSetUp: BECAUSE",
+                "",
+                "6) Ignored : NUnit.Tests.IgnoredFixture.Test2",
+                "OneTimeSetUp: BECAUSE",
+                "",
+                "7) Ignored : NUnit.Tests.IgnoredFixture.Test3",
+                "OneTimeSetUp: BECAUSE",
+                ""
+            };
+
+            var report = GetReportLines(_reporter.ReportResults);
+            foreach (var line in report)
+                TestContext.WriteLine(line);
+            
+            TestContext.WriteLine(_report.ToString());
+            Assert.That(report, Is.EqualTo(expected));
+        }
+
+        private static TestEngineResult AddMetadata(TestEngineResult input)
+        {
+            input.Add("<settings>" +
+                        "<setting name=\"TestParameters\" value=\"1=d;2=c\"></setting>" +
+                        "<setting name=\"TestParametersDictionary\" value=\"[1, d], [2, c]\">" +
+                            "<item key=\"1\" value=\"d\" />" +
+                            "<item key=\"2\" value=\"c\" />" +
+                        "</setting>" +
+                      "</settings>");
             return input.Aggregate("test-run start-time=\"2015-10-19 02:12:28Z\" end-time=\"2015-10-19 02:12:29Z\" duration=\"0.348616\"", string.Empty, string.Empty);
         }
 
@@ -194,7 +244,5 @@ namespace NUnit.ConsoleRunner.Tests
 
             return lines;
         }
-
-        #endregion
     }
 }
